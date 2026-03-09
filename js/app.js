@@ -112,16 +112,19 @@ async function searchCard() {
 
     const enCard = enData.data[0];
     
-    // 搜索中文版（通过 oracle_id）
+    // 搜索中文版（通过 oracle_id + 编号）
     let cnCard = null;
     if (enCard.oracle_id) {
       try {
+        // 先用 oracle_id 搜索所有中文版
         const cnResponse = await fetch(
           `https://api.scryfall.com/cards/search?q=oracle_id:${enCard.oracle_id}+lang:zh`
         );
         const cnData = await cnResponse.json();
         if (cnData.data && cnData.data.length > 0) {
-          cnCard = cnData.data[0];
+          // 从中文版中找到编号匹配的（优先精确匹配）
+          const targetNumber = match.number;
+          cnCard = cnData.data.find(c => c.collector_number === targetNumber) || cnData.data[0];
         }
       } catch (e) {
         console.log('中文版搜索失败:', e);
