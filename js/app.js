@@ -177,13 +177,14 @@ function displaySearchResults(enCard, cnCard) {
   const displayName = langMode === 'cn' && nameCn ? nameCn : nameEn;
   const subName = langMode === 'cn' && nameCn ? nameEn : nameCn;
 
-  // 获取稀有度
+  // 获取稀有度和颜色
   const rarity = enCard.rarity || '';
+  const colors = enCard.colors || [];
   
   resultsDiv.innerHTML = `
     <div class="card-item">
       <div class="card-image-wrapper">
-        <img class="card-image" src="${imageUrl}" alt="${escapeHtml(nameEn)}" loading="lazy" style="cursor: zoom-in;" data-image-url="${imageUrl}" data-name-display="${escapeHtml(displayName)}" data-name-en="${escapeHtml(nameEn)}" data-set-info="${setCode} ${enCard.collector_number || ''}" data-name-cn="${escapeHtml(nameCn || '')}" data-rarity="${escapeHtml(rarity)}">
+        <img class="card-image" src="${imageUrl}" alt="${escapeHtml(nameEn)}" loading="lazy" style="cursor: zoom-in;" data-image-url="${imageUrl}" data-name-display="${escapeHtml(displayName)}" data-name-en="${escapeHtml(nameEn)}" data-set-info="${setCode} ${enCard.collector_number || ''}" data-name-cn="${escapeHtml(nameCn || '')}" data-rarity="${escapeHtml(rarity)}" data-colors="${escapeHtml(JSON.stringify(colors))}">
         <div class="image-loading-indicator" data-image-url="${imageUrl}">
           <span class="loading-icon">⏳</span>
           <span class="loading-text">大图生成中</span>
@@ -214,7 +215,8 @@ function displaySearchResults(enCard, cnCard) {
         this.dataset.nameEn,
         this.dataset.setInfo,
         this.dataset.nameCn || '',
-        this.dataset.rarity || ''
+        this.dataset.rarity || '',
+        this.dataset.colors || '[]'
       );
     };
   }
@@ -740,21 +742,51 @@ let currentCardNameEn = ''; // 保存当前卡牌英文名
 let currentSetCode = ''; // 保存当前系列缩写
 let currentCardNumber = ''; // 保存当前编号
 let currentRarity = ''; // 保存当前稀有度
+let currentColors = []; // 保存当前颜色
 
-// 稀有度映射（英文 → 中文 + 图标）
-function getRarityLabel(rarity) {
-  const rarityMap = {
-    'common': { cn: '普通', icon: '⚪' },
-    'uncommon': { cn: '非普通', icon: '🥈' },
-    'rare': { cn: '稀有', icon: '🥇' },
-    'mythic': { cn: '秘稀', icon: '🔶' },
-    'bonus': { cn: '额外', icon: '✨' }
+// 颜色映射（英文 → 中文）
+function getColorLabel(colors) {
+  if (!colors || colors.length === 0) {
+    return '无色';
+  }
+  
+  const colorMap = {
+    'W': '白',
+    'U': '蓝',
+    'B': '黑',
+    'R': '红',
+    'G': '绿'
   };
-  const r = rarityMap[rarity] || { cn: rarity, icon: '📦' };
-  return `${r.icon} ${r.cn}`;
+  
+  // 处理混血（如 W/B）和多色
+  const colorNames = colors.map(c => {
+    if (c.includes('/')) {
+      // 混血，如 W/B
+      return c.split('/').map(x => colorMap[x] || x).join('/');
+    }
+    return colorMap[c] || c;
+  });
+  
+  if (colorNames.length === 1) {
+    return colorNames[0];
+  } else {
+    return '多色';
+  }
 }
 
-async function showCardImage(imageUrl, nameDisplay, nameEn, setInfo, nameCn = '', rarity = '') {
+// 稀有度映射（英文 → 中文）
+function getRarityLabel(rarity) {
+  const rarityMap = {
+    'common': '铁',
+    'uncommon': '银',
+    'rare': '金',
+    'mythic': '秘稀',
+    'bonus': '额外'
+  };
+  return rarityMap[rarity] || rarity;
+}
+
+async function showCardImage(imageUrl, nameDisplay, nameEn, setInfo, nameCn = '', rarity = '', colorsJson = '[]') {
   const modal = document.getElementById('cardModal');
   const loading = document.getElementById('modalLoading');
   const canvas = document.getElementById('modalCanvas');
@@ -766,6 +798,11 @@ async function showCardImage(imageUrl, nameDisplay, nameEn, setInfo, nameCn = ''
     currentCardNameCn = nameCn;  // 保留空值，用于判断是否有中文版
     currentCardNameEn = nameEn;
     currentRarity = rarity;
+    try {
+      currentColors = JSON.parse(colorsJson);
+    } catch (e) {
+      currentColors = [];
+    }
     
     // 解析系列和编号 (setInfo 格式："BIG 36")
     const setMatch = (setInfo || '').match(/^([A-Z0-9]+)\s+(\d+)$/i);
@@ -800,13 +837,14 @@ async function showCardImage(imageUrl, nameDisplay, nameEn, setInfo, nameCn = ''
       // 显示卡牌信息
       info.innerHTML = `<strong>${nameDisplay}</strong><br>${setInfo || nameEn}`;
       
-      // 设置复制文本框内容（有中文名才显示，否则只显示英文）+ 稀有度
+      // 设置复制文本框内容（有中文名才显示，否则只显示英文）+ 颜色 + 稀有度
       let copyText = '';
+      const colorLabel = getColorLabel(currentColors);
       const rarityLabel = currentRarity ? ` ${getRarityLabel(currentRarity)}` : '';
       if (currentCardNameCn && currentCardNameCn.trim() !== '') {
-        copyText = `牌客窝 万智牌 ${currentCardNameCn} ${currentCardNameEn}${rarityLabel}`;
+        copyText = `牌客窝 万智牌 ${currentCardNameCn} ${currentCardNameEn} ${colorLabel}${rarityLabel}`;
       } else {
-        copyText = `牌客窝 万智牌 ${currentCardNameEn}${rarityLabel}`;
+        copyText = `牌客窝 万智牌 ${currentCardNameEn} ${colorLabel}${rarityLabel}`;
       }
       if (copyInput) {
         copyInput.value = copyText;
@@ -829,13 +867,14 @@ async function showCardImage(imageUrl, nameDisplay, nameEn, setInfo, nameCn = ''
         // 显示卡牌信息
         info.innerHTML = `<strong>${nameDisplay}</strong><br>${setInfo || nameEn}`;
         
-        // 设置复制文本框内容（有中文名才显示，否则只显示英文）+ 稀有度
+        // 设置复制文本框内容（有中文名才显示，否则只显示英文）+ 颜色 + 稀有度
         let copyText = '';
+        const colorLabel = getColorLabel(currentColors);
         const rarityLabel = currentRarity ? ` ${getRarityLabel(currentRarity)}` : '';
         if (currentCardNameCn && currentCardNameCn.trim() !== '') {
-          copyText = `牌客窝 万智牌 ${currentCardNameCn} ${currentCardNameEn}${rarityLabel}`;
+          copyText = `牌客窝 万智牌 ${currentCardNameCn} ${currentCardNameEn} ${colorLabel}${rarityLabel}`;
         } else {
-          copyText = `牌客窝 万智牌 ${currentCardNameEn}${rarityLabel}`;
+          copyText = `牌客窝 万智牌 ${currentCardNameEn} ${colorLabel}${rarityLabel}`;
         }
         if (copyInput) {
           copyInput.value = copyText;
