@@ -167,7 +167,12 @@ function displaySearchResults(enCard, cnCard) {
   const nameEn = escapeHtml(enCard.name);
   const nameCn = escapeHtml(cnCard?.printed_name || cnCard?.name || '');
   const displayType = escapeHtml(enCard.printed_type_line || enCard.type_line);
-  const imageUrl = enCard.image_uris?.normal || enCard.image_uris?.small || 'https://cards.scryfall.io/back.jpg';
+  
+  // 获取图片 URL（根据语言模式选择中文版或英文版）
+  const enImageUrl = enCard.image_uris?.normal || enCard.image_uris?.small || 'https://cards.scryfall.io/back.jpg';
+  const cnImageUrl = cnCard?.image_uris?.normal || cnCard?.image_uris?.small || enImageUrl;
+  const imageUrl = langMode === 'cn' && cnCard ? cnImageUrl : enImageUrl;
+  
   const price = getPriceForMode(enCard, isFoilMode);
   const modeLabel = isFoilMode ? '✨ Foil' : '📄 Non-Foil';
   const setName = enCard.set_name || '';
@@ -177,7 +182,7 @@ function displaySearchResults(enCard, cnCard) {
   const displayName = langMode === 'cn' && nameCn ? nameCn : nameEn;
   const subName = langMode === 'cn' && nameCn ? nameEn : nameCn;
 
-  // 获取稀有度和颜色
+  // 获取稀有度和颜色（使用英文版数据）
   const rarity = enCard.rarity || '';
   const colors = enCard.colors || [];
   // 颜色用逗号分隔存储，避免 JSON 转义问题
@@ -186,7 +191,7 @@ function displaySearchResults(enCard, cnCard) {
   resultsDiv.innerHTML = `
     <div class="card-item">
       <div class="card-image-wrapper">
-        <img class="card-image" src="${imageUrl}" alt="${escapeHtml(nameEn)}" loading="lazy" style="cursor: zoom-in;" data-image-url="${imageUrl}" data-name-display="${escapeHtml(displayName)}" data-name-en="${escapeHtml(nameEn)}" data-set-info="${setCode} ${enCard.collector_number || ''}" data-name-cn="${escapeHtml(nameCn || '')}" data-rarity="${escapeHtml(rarity)}" data-colors="${escapeHtml(colorsStr)}">
+        <img class="card-image" src="${imageUrl}" alt="${escapeHtml(nameEn)}" loading="lazy" style="cursor: zoom-in;" data-image-url="${imageUrl}" data-en-image-url="${escapeHtml(enImageUrl)}" data-cn-image-url="${escapeHtml(cnImageUrl)}" data-name-display="${escapeHtml(displayName)}" data-name-en="${escapeHtml(nameEn)}" data-set-info="${setCode} ${enCard.collector_number || ''}" data-name-cn="${escapeHtml(nameCn || '')}" data-rarity="${escapeHtml(rarity)}" data-colors="${escapeHtml(colorsStr)}">
         <div class="image-loading-indicator" data-image-url="${imageUrl}">
           <span class="loading-icon">⏳</span>
           <span class="loading-text">大图生成中</span>
