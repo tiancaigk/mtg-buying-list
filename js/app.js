@@ -94,9 +94,24 @@ async function searchCard() {
       return;
     }
 
-    // 第一步：精确搜索英文版（系列 + 编号 + 英文）
+    // 第一步：直接搜索中文版（系列 + 编号 + 中文）
+    let cnCard = null;
+    try {
+      const cnResponse = await fetch(
+        `https://api.scryfall.com/cards/search?q=e:${match.set}+cn:${match.number}+lang:zh&unique=prints`
+      );
+      const cnData = await cnResponse.json();
+      if (cnData.total_cards > 0 && cnData.data && cnData.data.length > 0) {
+        cnCard = cnData.data[0];
+        console.log('✅ 找到中文版:', cnCard.printed_name || cnCard.name, '编号:', cnCard.collector_number);
+      }
+    } catch (e) {
+      console.log('中文版搜索失败:', e);
+    }
+    
+    // 第二步：搜索英文版（系列 + 编号 + 英文）
     const enResponse = await fetch(
-      `https://api.scryfall.com/cards/search?q=e:${match.set}+number:${match.number}+lang:en&unique=prints`
+      `https://api.scryfall.com/cards/search?q=e:${match.set}+cn:${match.number}+lang:en&unique=prints`
     );
     const enData = await enResponse.json();
 
@@ -111,25 +126,6 @@ async function searchCard() {
     }
 
     const enCard = enData.data[0];
-    
-    // 第二步：用 oracle_id 精确搜索中文版（同一张牌的中文版本）
-    let cnCard = null;
-    if (enCard.oracle_id) {
-      try {
-        const cnResponse = await fetch(
-          `https://api.scryfall.com/cards/search?q=oracle_id:${enCard.oracle_id}+lang:zh&unique=prints`
-        );
-        const cnData = await cnResponse.json();
-        if (cnData.data && cnData.data.length > 0) {
-          cnCard = cnData.data[0];
-          console.log('✅ 找到中文版:', cnCard.name, '编号:', cnCard.collector_number);
-        } else {
-          console.log('ℹ️ 这张牌没有中文版');
-        }
-      } catch (e) {
-        console.log('中文版搜索失败:', e);
-      }
-    }
 
     displaySearchResults(enCard, cnCard);
 
