@@ -181,7 +181,10 @@ function displaySearchResults(enCard, cnCard) {
     <div class="card-item">
       <div class="card-image-wrapper">
         <img class="card-image" src="${imageUrl}" alt="${escapeHtml(nameEn)}" loading="lazy" style="cursor: zoom-in;" data-image-url="${imageUrl}" data-name-display="${escapeHtml(displayName)}" data-name-en="${escapeHtml(nameEn)}" data-set-info="${setCode} ${enCard.collector_number || ''}" data-name-cn="${escapeHtml(nameCn || '')}">
-        <div class="image-loading-indicator" data-image-url="${imageUrl}">⏳</div>
+        <div class="image-loading-indicator" data-image-url="${imageUrl}">
+          <span class="loading-icon">⏳</span>
+          <span class="loading-text">大图生成中</span>
+        </div>
       </div>
       <div class="card-details">
         <div class="card-name">${displayName}${subName ? `<br><span style="color: var(--text-muted); font-size: 0.875rem;">${subName}</span>` : ''}</div>
