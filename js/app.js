@@ -180,11 +180,13 @@ function displaySearchResults(enCard, cnCard) {
   // 获取稀有度和颜色
   const rarity = enCard.rarity || '';
   const colors = enCard.colors || [];
+  // 颜色用逗号分隔存储，避免 JSON 转义问题
+  const colorsStr = colors.join(',');
   
   resultsDiv.innerHTML = `
     <div class="card-item">
       <div class="card-image-wrapper">
-        <img class="card-image" src="${imageUrl}" alt="${escapeHtml(nameEn)}" loading="lazy" style="cursor: zoom-in;" data-image-url="${imageUrl}" data-name-display="${escapeHtml(displayName)}" data-name-en="${escapeHtml(nameEn)}" data-set-info="${setCode} ${enCard.collector_number || ''}" data-name-cn="${escapeHtml(nameCn || '')}" data-rarity="${escapeHtml(rarity)}" data-colors="${escapeHtml(JSON.stringify(colors))}">
+        <img class="card-image" src="${imageUrl}" alt="${escapeHtml(nameEn)}" loading="lazy" style="cursor: zoom-in;" data-image-url="${imageUrl}" data-name-display="${escapeHtml(displayName)}" data-name-en="${escapeHtml(nameEn)}" data-set-info="${setCode} ${enCard.collector_number || ''}" data-name-cn="${escapeHtml(nameCn || '')}" data-rarity="${escapeHtml(rarity)}" data-colors="${escapeHtml(colorsStr)}">
         <div class="image-loading-indicator" data-image-url="${imageUrl}">
           <span class="loading-icon">⏳</span>
           <span class="loading-text">大图生成中</span>
@@ -209,6 +211,8 @@ function displaySearchResults(enCard, cnCard) {
   const img = resultsDiv.querySelector('.card-image');
   if (img) {
     img.onclick = function() {
+      // 颜色从逗号分隔字符串转回数组
+      const colorsArr = this.dataset.colors ? this.dataset.colors.split(',').filter(c => c) : [];
       showCardImage(
         this.dataset.imageUrl,
         this.dataset.nameDisplay,
@@ -216,7 +220,7 @@ function displaySearchResults(enCard, cnCard) {
         this.dataset.setInfo,
         this.dataset.nameCn || '',
         this.dataset.rarity || '',
-        this.dataset.colors || '[]'
+        JSON.stringify(colorsArr)
       );
     };
   }
