@@ -12,6 +12,45 @@ let isFoilMode = false;
 // 语言模式 ('cn' = 中文优先，'en' = 英文优先)
 let langMode = 'cn';
 
+// ============ 图片预加载功能 ============
+
+// 预加载卡牌图片（后台生成正方形图）
+async function preloadCardImage(imageUrl) {
+  // 如果已缓存或正在加载，跳过
+  if (imageCache[imageUrl] || imageLoading[imageUrl]) {
+    return;
+  }
+  
+  imageLoading[imageUrl] = true;
+  
+  // 显示加载指示器
+  const indicators = document.querySelectorAll('.image-loading-indicator');
+  indicators.forEach(ind => {
+    if (ind.dataset.imageUrl === imageUrl) {
+      ind.style.display = 'block';
+    }
+  });
+  
+  try {
+    // 后台生成正方形图片
+    const canvas = await renderAndShowCanvas(imageUrl, null, null, true);
+    imageCache[imageUrl] = canvas;
+    console.log('✅ 图片预加载完成:', imageUrl);
+  } catch (error) {
+    console.log('❌ 图片预加载失败:', imageUrl, error);
+  } finally {
+    imageLoading[imageUrl] = false;
+    
+    // 隐藏加载指示器
+    const indicators = document.querySelectorAll('.image-loading-indicator');
+    indicators.forEach(ind => {
+      if (ind.dataset.imageUrl === imageUrl) {
+        ind.style.display = 'none';
+      }
+    });
+  }
+}
+
 // ============ 搜索功能 ============
 
 async function searchCard() {
@@ -125,7 +164,10 @@ function displaySearchResults(enCard, cnCard) {
 
   resultsDiv.innerHTML = `
     <div class="card-item">
-      <img class="card-image" src="${imageUrl}" alt="${escapeHtml(nameEn)}" loading="lazy" style="cursor: zoom-in;" data-image-url="${imageUrl}" data-name-display="${escapeHtml(displayName)}" data-name-en="${escapeHtml(nameEn)}" data-set-info="${setCode} ${enCard.collector_number || ''}">
+      <div class="card-image-wrapper" style="position: relative;">
+        <img class="card-image" src="${imageUrl}" alt="${escapeHtml(nameEn)}" loading="lazy" style="cursor: zoom-in;" data-image-url="${imageUrl}" data-name-display="${escapeHtml(displayName)}" data-name-en="${escapeHtml(nameEn)}" data-set-info="${setCode} ${enCard.collector_number || ''}" data-name-cn="${escapeHtml(nameCn || '')}">
+        <div class="image-loading-indicator" data-image-url="${imageUrl}" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 1.5rem; display: none;">⏳</div>
+      </div>
       <div class="card-details">
         <div class="card-name">${displayName}${subName ? `<br><span style="color: var(--text-muted); font-size: 0.875rem;">${subName}</span>` : ''}</div>
         <div class="card-type">${displayType}</div>
@@ -137,6 +179,9 @@ function displaySearchResults(enCard, cnCard) {
       </button>
     </div>
   `;
+  
+  // 开始预加载这张图片（后台生成）
+  preloadCardImage(imageUrl);
   
   // 添加事件监听
   const img = resultsDiv.querySelector('.card-image');
@@ -665,6 +710,10 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
+// ========== 图片预加载缓存 ==========
+const imageCache = {}; // 缓存已生成的正方形图片 { imageUrl: canvas }
+const imageLoading = {}; // 标记正在加载的图片 { imageUrl: true }
+
 // 显示卡牌大图
 let currentImageUrl = ''; // 保存当前图片 URL
 let currentCanvas = null; // 保存当前 canvas
@@ -695,40 +744,69 @@ async function showCardImage(imageUrl, nameDisplay, nameEn, setInfo, nameCn = ''
       currentCardNumber = '';
     }
     
-    // 显示加载动画
-    loading.style.display = 'flex';
-    canvas.style.display = 'none';
-    info.innerHTML = '';
-    
     modal.style.setProperty('display', 'flex', 'important');
     
-    try {
-      // 渲染正方形图片
-      currentCanvas = await renderAndShowCanvas(imageUrl, canvas, loading);
+    // 检查是否已有缓存
+    if (imageCache[imageUrl]) {
+      // 直接使用缓存的图片
+      console.log('✅ 使用缓存图片:', imageUrl);
+      loading.style.display = 'none';
+      canvas.style.display = 'block';
+      canvas.width = imageCache[imageUrl].width;
+      canvas.height = imageCache[imageUrl].height;
+      
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(imageCache[imageUrl], 0, 0);
+      
+      currentCanvas = imageCache[imageUrl];
       
       // 显示卡牌信息
       info.innerHTML = `<strong>${nameDisplay}</strong><br>${setInfo || nameEn}`;
       
-      // 设置复制文本框内容：牌客窝 万智牌 中文名 英文名
+      // 设置复制文本框内容
       const copyText = `牌客窝 万智牌 ${currentCardNameCn} ${currentCardNameEn}`;
       if (copyInput) {
         copyInput.value = copyText;
       }
       
-      // 添加点击放大功能
       canvas.onclick = function() {
         openCanvasInNewTab(currentCanvas);
       };
+    } else {
+      // 没有缓存，显示加载动画并生成
+      loading.style.display = 'flex';
+      canvas.style.display = 'none';
+      info.innerHTML = '';
       
-    } catch (error) {
-      console.error('渲染失败:', error);
-      loading.innerHTML = '<div>❌ 生成失败，点击"查看原图"</div>';
+      try {
+        // 渲染正方形图片
+        currentCanvas = await renderAndShowCanvas(imageUrl, canvas, loading);
+        
+        // 显示卡牌信息
+        info.innerHTML = `<strong>${nameDisplay}</strong><br>${setInfo || nameEn}`;
+        
+        // 设置复制文本框内容
+        const copyText = `牌客窝 万智牌 ${currentCardNameCn} ${currentCardNameEn}`;
+        if (copyInput) {
+          copyInput.value = copyText;
+        }
+        
+        // 添加点击放大功能
+        canvas.onclick = function() {
+          openCanvasInNewTab(currentCanvas);
+        };
+        
+      } catch (error) {
+        console.error('渲染失败:', error);
+        loading.innerHTML = '<div>❌ 生成失败，点击"查看原图"</div>';
+      }
     }
   }
 }
 
 // 渲染并显示 canvas
-async function renderAndShowCanvas(imgUrl, canvas, loading) {
+async function renderAndShowCanvas(imgUrl, canvas, loading, silent = false) {
   // 多个 CORS 代理，按优先级尝试
   const proxies = [
     'https://api.allorigins.win/raw?url=',      // 国内相对可用
@@ -743,15 +821,17 @@ async function renderAndShowCanvas(imgUrl, canvas, loading) {
     try {
       const renderedCanvas = await renderCardToCanvasWithProxy(imgUrl, proxy);
       
-      // 显示 canvas
-      loading.style.display = 'none';
-      canvas.style.display = 'block';
-      canvas.width = renderedCanvas.width;
-      canvas.height = renderedCanvas.height;
-      
-      const ctx = canvas.getContext('2d');
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(renderedCanvas, 0, 0);
+      // 如果不是静默模式，显示 canvas
+      if (!silent && canvas && loading) {
+        loading.style.display = 'none';
+        canvas.style.display = 'block';
+        canvas.width = renderedCanvas.width;
+        canvas.height = renderedCanvas.height;
+        
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(renderedCanvas, 0, 0);
+      }
       
       return renderedCanvas;
       
