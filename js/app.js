@@ -613,11 +613,7 @@ function setFoilMode(isFoil) {
     }
   }
   
-  // 重新搜索（如果有输入）
-  const input = document.getElementById('cardInput');
-  if (input && input.value.trim()) {
-    searchCard();
-  }
+  // 切换模式只为下一次搜索做准备，不自动重新搜索
 }
 
 // ============ 语言模式切换 ============
@@ -639,14 +635,7 @@ function setLangMode(mode) {
     }
   }
   
-  // 重新搜索（如果有输入）
-  const input = document.getElementById('cardInput');
-  if (input && input.value.trim()) {
-    searchCard();
-  }
-  
-  // 重新渲染清单
-  renderList();
+  // 切换模式只为下一次搜索做准备，不自动重新搜索/渲染
 }
 
 // 获取对应版本的价格
