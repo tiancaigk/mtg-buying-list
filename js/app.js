@@ -94,11 +94,11 @@ async function searchCard() {
       return;
     }
 
-    // 先搜索英文版
-    const response = await fetch(
-      `https://api.scryfall.com/cards/search?q=e:${match.set}+cn:${match.number}&unique=prints`
+    // 第一步：精确搜索英文版（系列 + 编号 + 英文）
+    const enResponse = await fetch(
+      `https://api.scryfall.com/cards/search?q=e:${match.set}+number:${match.number}+lang:en&unique=prints`
     );
-    const enData = await response.json();
+    const enData = await enResponse.json();
 
     if (enData.total_cards === 0 || !enData.data || enData.data.length === 0) {
       resultsDiv.innerHTML = `
@@ -112,19 +112,19 @@ async function searchCard() {
 
     const enCard = enData.data[0];
     
-    // 搜索中文版（通过 oracle_id + 编号）
+    // 第二步：用 oracle_id 精确搜索中文版（同一张牌的中文版本）
     let cnCard = null;
     if (enCard.oracle_id) {
       try {
-        // 先用 oracle_id 搜索所有中文版
         const cnResponse = await fetch(
-          `https://api.scryfall.com/cards/search?q=oracle_id:${enCard.oracle_id}+lang:zh`
+          `https://api.scryfall.com/cards/search?q=oracle_id:${enCard.oracle_id}+lang:zh&unique=prints`
         );
         const cnData = await cnResponse.json();
         if (cnData.data && cnData.data.length > 0) {
-          // 从中文版中找到编号匹配的（优先精确匹配）
-          const targetNumber = match.number;
-          cnCard = cnData.data.find(c => c.collector_number === targetNumber) || cnData.data[0];
+          cnCard = cnData.data[0];
+          console.log('✅ 找到中文版:', cnCard.name, '编号:', cnCard.collector_number);
+        } else {
+          console.log('ℹ️ 这张牌没有中文版');
         }
       } catch (e) {
         console.log('中文版搜索失败:', e);
