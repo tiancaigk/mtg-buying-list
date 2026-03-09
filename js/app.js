@@ -781,8 +781,13 @@ async function showCardImage(imageUrl, nameDisplay, nameEn, setInfo, nameCn = ''
       // 显示卡牌信息
       info.innerHTML = `<strong>${nameDisplay}</strong><br>${setInfo || nameEn}`;
       
-      // 设置复制文本框内容
-      const copyText = `牌客窝 万智牌 ${currentCardNameCn} ${currentCardNameEn}`;
+      // 设置复制文本框内容（有中文名才显示，否则只显示英文）
+      let copyText = '';
+      if (currentCardNameCn && currentCardNameCn.trim() !== '') {
+        copyText = `牌客窝 万智牌 ${currentCardNameCn} ${currentCardNameEn}`;
+      } else {
+        copyText = `牌客窝 万智牌 ${currentCardNameEn}`;
+      }
       if (copyInput) {
         copyInput.value = copyText;
       }
@@ -804,8 +809,13 @@ async function showCardImage(imageUrl, nameDisplay, nameEn, setInfo, nameCn = ''
         // 显示卡牌信息
         info.innerHTML = `<strong>${nameDisplay}</strong><br>${setInfo || nameEn}`;
         
-        // 设置复制文本框内容
-        const copyText = `牌客窝 万智牌 ${currentCardNameCn} ${currentCardNameEn}`;
+        // 设置复制文本框内容（有中文名才显示，否则只显示英文）
+        let copyText = '';
+        if (currentCardNameCn && currentCardNameCn.trim() !== '') {
+          copyText = `牌客窝 万智牌 ${currentCardNameCn} ${currentCardNameEn}`;
+        } else {
+          copyText = `牌客窝 万智牌 ${currentCardNameEn}`;
+        }
         if (copyInput) {
           copyInput.value = copyText;
         }
