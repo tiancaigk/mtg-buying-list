@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MTG Buying List - 万智牌采购清单</title>
+  <link rel="stylesheet" href="css/main.css?v=202603091645">
+  <meta name="description" content="万智牌采购清单工具 - 快速查询卡牌信息">
+</head>
+<body>
+  <!-- 头部 -->
+  <header class="header">
+    <div class="header-content">
+      <div class="logo">
+        <div class="logo-icon">🛒</div>
+        <span>MTG Buying List</span>
+      </div>
+      <div class="deck-info">
+        <div class="deck-stat">
+          <div class="deck-stat-value" id="totalCount">0</div>
+          <div class="deck-stat-label">卡牌数量</div>
+        </div>
+        <div class="deck-stat">
+          <div class="deck-stat-value price" id="totalPrice">$0.00</div>
+          <div class="deck-stat-label">预估总价</div>
+        </div>
+        <div class="deck-stat buylist-stat">
+          <div class="deck-stat-value buylist-price" id="buylistTotal">$0.00</div>
+          <div class="deck-stat-label">📋 估算回收价</div>
+          <div class="buylist-note">Non-Foil 60% | Foil 50%</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- 主容器 -->
+  <main class="main-container">
+    <!-- 左侧：搜索和添加 -->
+    <div class="search-section">
+      <div class="search-box">
+        <input type="text" class="search-input" id="cardInput" placeholder="输入系列 + 编号，如 BIG 36" autocomplete="off">
+        <button class="search-btn" onclick="window.buyingList.searchCard()">
+          🔍 查询
+        </button>
+      </div>
+      <div class="search-options">
+        <label class="checkbox-label">
+          <input type="checkbox" id="autoAddCheckbox" checked>
+          <span>自动添加到清单</span>
+        </label>
+        <div class="foil-toggle-group">
+          <span class="foil-toggle-label">版本:</span>
+          <button class="foil-toggle-btn active" id="nonfoilBtn" onclick="window.buyingList.setFoilMode(false)">
+            📄 Non-Foil
+          </button>
+          <button class="foil-toggle-btn" id="foilBtn" onclick="window.buyingList.setFoilMode(true)">
+            ✨ Foil
+          </button>
+        </div>
+        <div class="lang-toggle-group">
+          <span class="foil-toggle-label">语言:</span>
+          <button class="foil-toggle-btn active" id="cnBtn" onclick="window.buyingList.setLangMode('cn')">
+            🇨🇳 中文
+          </button>
+          <button class="foil-toggle-btn" id="enBtn" onclick="window.buyingList.setLangMode('en')">
+            🇺🇸 English
+          </button>
+        </div>
+      </div>
+      <div class="search-results" id="searchResults"></div>
+    </div>
+
+    <!-- 卡牌大图预览弹窗 -->
+    <div class="modal-overlay" id="cardModal" onclick="this.style.display='none'">
+      <div class="modal-content" onclick="event.stopPropagation()">
+        <button class="modal-close" onclick="document.getElementById('cardModal').style.display='none'">✕</button>
+        <div class="modal-loading" id="modalLoading">
+          <div class="loading-spinner"></div>
+          <div>正在生成正方形图片...</div>
+        </div>
+        <canvas id="modalCanvas" style="display: none; max-width: 100%; max-height: 60vh; margin: 0 auto; display: block;"></canvas>
+        <div class="modal-card-info" id="modalCardInfo"></div>
+        
+        <!-- 复制文本框区域 -->
+        <div class="modal-copy-section">
+          <input type="text" class="modal-copy-input" id="modalCopyInput" readonly>
+          <button class="modal-copy-btn" onclick="copyCardInfo()">📋 复制</button>
+        </div>
+        
+        <div class="modal-actions">
+          <button class="action-btn" onclick="downloadSquareImage()">📥 保存图片</button>
+          <button class="action-btn" onclick="openOriginalImage()">🔍 查看原图</button>
+          <button class="action-btn" onclick="document.getElementById('cardModal').style.display='none'">关闭</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 右侧：采购清单 -->
+    <aside class="buying-list-panel">
+      <div class="panel-header">
+        <h2 class="panel-title">📋 采购清单</h2>
+        <div class="panel-actions">
+          <button class="action-btn" onclick="window.buyingList.exportList()" title="导出清单">📤</button>
+          <button class="action-btn" onclick="window.buyingList.clearList()" title="清空清单">🗑️</button>
+        </div>
+      </div>
+
+      <div class="list-content" id="listContent">
+        <div class="empty-state">
+          <div class="empty-state-icon">🛒</div>
+          <div class="empty-state-text">暂无卡牌<br>输入系列 + 编号开始添加</div>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
