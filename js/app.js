@@ -745,7 +745,7 @@ async function showCardImage(imageUrl, nameDisplay, nameEn, setInfo, nameCn = ''
   
   if (modal && loading && canvas && info) {
     currentImageUrl = imageUrl;
-    currentCardNameCn = nameCn || nameDisplay;
+    currentCardNameCn = nameCn;  // 保留空值，用于判断是否有中文版
     currentCardNameEn = nameEn;
     
     // 解析系列和编号 (setInfo 格式："BIG 36")
