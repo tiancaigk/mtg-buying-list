@@ -841,14 +841,14 @@ async function showCardImage(imageUrl, nameDisplay, nameEn, setInfo, nameCn = ''
       // 显示卡牌信息
       info.innerHTML = `<strong>${nameDisplay}</strong><br>${setInfo || nameEn}`;
       
-      // 设置复制文本框内容（有中文名才显示，否则只显示英文）+ 颜色 + 稀有度
+      // 设置复制文本框内容（有中文名才显示，否则只显示英文）+ 稀有度 + 颜色
       let copyText = '';
       const colorLabel = getColorLabel(currentColors);
       const rarityLabel = currentRarity ? ` ${getRarityLabel(currentRarity)}` : '';
       if (currentCardNameCn && currentCardNameCn.trim() !== '') {
-        copyText = `牌客窝 万智牌 ${currentCardNameCn} ${currentCardNameEn} ${colorLabel}${rarityLabel}`;
+        copyText = `牌客窝 万智牌 ${currentCardNameCn} ${currentCardNameEn}${rarityLabel} ${colorLabel}`;
       } else {
-        copyText = `牌客窝 万智牌 ${currentCardNameEn} ${colorLabel}${rarityLabel}`;
+        copyText = `牌客窝 万智牌 ${currentCardNameEn}${rarityLabel} ${colorLabel}`;
       }
       if (copyInput) {
         copyInput.value = copyText;
@@ -871,14 +871,14 @@ async function showCardImage(imageUrl, nameDisplay, nameEn, setInfo, nameCn = ''
         // 显示卡牌信息
         info.innerHTML = `<strong>${nameDisplay}</strong><br>${setInfo || nameEn}`;
         
-        // 设置复制文本框内容（有中文名才显示，否则只显示英文）+ 颜色 + 稀有度
+        // 设置复制文本框内容（有中文名才显示，否则只显示英文）+ 稀有度 + 颜色
         let copyText = '';
         const colorLabel = getColorLabel(currentColors);
         const rarityLabel = currentRarity ? ` ${getRarityLabel(currentRarity)}` : '';
         if (currentCardNameCn && currentCardNameCn.trim() !== '') {
-          copyText = `牌客窝 万智牌 ${currentCardNameCn} ${currentCardNameEn} ${colorLabel}${rarityLabel}`;
+          copyText = `牌客窝 万智牌 ${currentCardNameCn} ${currentCardNameEn}${rarityLabel} ${colorLabel}`;
         } else {
-          copyText = `牌客窝 万智牌 ${currentCardNameEn} ${colorLabel}${rarityLabel}`;
+          copyText = `牌客窝 万智牌 ${currentCardNameEn}${rarityLabel} ${colorLabel}`;
         }
         if (copyInput) {
           copyInput.value = copyText;
