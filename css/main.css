@@ -579,6 +579,8 @@ body::before {
 .card-image-wrapper {
   position: relative;
   flex-shrink: 0;
+  width: 70px;
+  height: 98px;
 }
 
 .card-image {
@@ -599,13 +601,24 @@ body::before {
 }
 
 .image-loading-indicator {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  font-size: 1.25rem;
   pointer-events: none;
   animation: pulse 1s ease-in-out infinite;
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 @keyframes pulse {
-  0%, 100% { opacity: 0.6; transform: translate(-50%, -50%) scale(1); }
-  50% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.1); }
 }
 
 /* 卡牌大图预览 */

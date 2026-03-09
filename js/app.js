@@ -12,30 +12,45 @@ let isFoilMode = false;
 // 语言模式 ('cn' = 中文优先，'en' = 英文优先)
 let langMode = 'cn';
 
+// ========== 图片预加载缓存（移到顶部避免 hoisting 问题）==========
+const imageCache = {}; // 缓存已生成的正方形图片 { imageUrl: canvas }
+const imageLoading = {}; // 标记正在加载的图片 { imageUrl: true }
+
 // ============ 图片预加载功能 ============
 
 // 预加载卡牌图片（后台生成正方形图）
 async function preloadCardImage(imageUrl) {
+  console.log('🔄 开始预加载:', imageUrl);
+  console.log('📦 缓存状态:', { hasCache: !!imageCache[imageUrl], isLoading: !!imageLoading[imageUrl], cacheKeys: Object.keys(imageCache).length });
+  
   // 如果已缓存或正在加载，跳过
-  if (imageCache[imageUrl] || imageLoading[imageUrl]) {
+  if (imageCache[imageUrl]) {
+    console.log('✅ 已有缓存，跳过');
+    return;
+  }
+  if (imageLoading[imageUrl]) {
+    console.log('⏳ 正在加载中，跳过');
     return;
   }
   
   imageLoading[imageUrl] = true;
   
   // 显示加载指示器
-  const indicators = document.querySelectorAll('.image-loading-indicator');
-  indicators.forEach(ind => {
-    if (ind.dataset.imageUrl === imageUrl) {
-      ind.style.display = 'block';
-    }
-  });
+  setTimeout(() => {
+    const indicators = document.querySelectorAll('.image-loading-indicator');
+    indicators.forEach(ind => {
+      if (ind.dataset.imageUrl === imageUrl) {
+        ind.style.display = 'flex';
+        console.log('👁️ 显示加载指示器');
+      }
+    });
+  }, 100);
   
   try {
     // 后台生成正方形图片
     const canvas = await renderAndShowCanvas(imageUrl, null, null, true);
     imageCache[imageUrl] = canvas;
-    console.log('✅ 图片预加载完成:', imageUrl);
+    console.log('✅ 图片预加载完成，已缓存:', imageUrl, 'Canvas 尺寸:', canvas.width, 'x', canvas.height);
   } catch (error) {
     console.log('❌ 图片预加载失败:', imageUrl, error);
   } finally {
@@ -164,9 +179,9 @@ function displaySearchResults(enCard, cnCard) {
 
   resultsDiv.innerHTML = `
     <div class="card-item">
-      <div class="card-image-wrapper" style="position: relative;">
+      <div class="card-image-wrapper">
         <img class="card-image" src="${imageUrl}" alt="${escapeHtml(nameEn)}" loading="lazy" style="cursor: zoom-in;" data-image-url="${imageUrl}" data-name-display="${escapeHtml(displayName)}" data-name-en="${escapeHtml(nameEn)}" data-set-info="${setCode} ${enCard.collector_number || ''}" data-name-cn="${escapeHtml(nameCn || '')}">
-        <div class="image-loading-indicator" data-image-url="${imageUrl}" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 1.5rem; display: none;">⏳</div>
+        <div class="image-loading-indicator" data-image-url="${imageUrl}">⏳</div>
       </div>
       <div class="card-details">
         <div class="card-name">${displayName}${subName ? `<br><span style="color: var(--text-muted); font-size: 0.875rem;">${subName}</span>` : ''}</div>
@@ -710,10 +725,6 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
-// ========== 图片预加载缓存 ==========
-const imageCache = {}; // 缓存已生成的正方形图片 { imageUrl: canvas }
-const imageLoading = {}; // 标记正在加载的图片 { imageUrl: true }
-
 // 显示卡牌大图
 let currentImageUrl = ''; // 保存当前图片 URL
 let currentCanvas = null; // 保存当前 canvas
@@ -746,10 +757,13 @@ async function showCardImage(imageUrl, nameDisplay, nameEn, setInfo, nameCn = ''
     
     modal.style.setProperty('display', 'flex', 'important');
     
+    console.log('🔍 检查缓存:', imageUrl);
+    console.log('📦 缓存状态:', { hasCache: !!imageCache[imageUrl], cacheKeys: Object.keys(imageCache).length });
+    
     // 检查是否已有缓存
     if (imageCache[imageUrl]) {
       // 直接使用缓存的图片
-      console.log('✅ 使用缓存图片:', imageUrl);
+      console.log('✅ 使用缓存图片！');
       loading.style.display = 'none';
       canvas.style.display = 'block';
       canvas.width = imageCache[imageUrl].width;
@@ -774,6 +788,7 @@ async function showCardImage(imageUrl, nameDisplay, nameEn, setInfo, nameCn = ''
         openCanvasInNewTab(currentCanvas);
       };
     } else {
+      console.log('⏳ 无缓存，开始生成...');
       // 没有缓存，显示加载动画并生成
       loading.style.display = 'flex';
       canvas.style.display = 'none';
